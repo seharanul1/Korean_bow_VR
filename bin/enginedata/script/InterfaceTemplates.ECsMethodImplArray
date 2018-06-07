@@ -1,0 +1,5 @@
+	///@brief %help%
+	public %csRetType% Get%prop%(int index);
+	public void Set%prop%(%csArgType% value, int index);
+
+

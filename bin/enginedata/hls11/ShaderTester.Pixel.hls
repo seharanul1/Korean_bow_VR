@@ -1,0 +1,66 @@
+
+// ShaderTester Object 용 example Pixel Shader code
+
+
+cbuffer SHADER_EXTERN
+{
+	float4 DrawPhase;
+	float4 ClipPlane;
+};
+
+
+
+// 출력정점 형식
+struct VS_OUTPUT
+{
+	float4 Position : POSITION;
+    float4 UV : TEXCOORD0;
+	float4 InPosition : TEXCOORD1;
+	float4 ViewPosition : TEXCOORD2;
+	float4 Normal : NORMAL0; 
+	float4 Diffuse : NORMAL1;
+};
+
+
+/*
+아래 slot number가 dx11에서 bug 있으므로  아래 comment된 코드와 병용해야 함
+
+sampler TextureDiffuse : register(s0);
+*/
+
+
+Texture2D TextureDiffuse : register(t0);
+SamplerState TextureDiffuseSampler : register(s0);
+
+
+
+
+
+float4 PS(VS_OUTPUT Out) : SV_Target
+{
+	
+	//return float4(1.0, 0.0, 0.0, 1.0);
+
+	float4 color;
+	//CSI 0307
+	color = TextureDiffuse.Sample(TextureDiffuseSampler, Out.UV.xy);
+
+	// PhaseDepth
+	if (DrawPhase.x >= 2.9 && DrawPhase.x <= 3.1) // == 3)  
+		color.w = Out.UV.z;
+		
+	if (ClipPlane.x != 0.0 || ClipPlane.y != 0.0 || ClipPlane.z != 0.0)
+	{
+		if (Out.InPosition.x * ClipPlane.x + Out.InPosition.y * ClipPlane.y + Out.InPosition.z * ClipPlane.z + ClipPlane.w <= 0)
+			discard;	
+	}
+	
+
+
+	return color;
+}
+
+
+
+
+

@@ -1,0 +1,52 @@
+EXPORTS
+    ENG_CAPI_TransformGroup_Find @1 DATA
+    ENG_CAPI_TransformGroup_FindNearCollision @2 DATA
+    ENG_CAPI_TransformGroup_FindNearestCollision @3 DATA
+    ENG_CAPI_TransformGroup_GetLocalBox @4 DATA
+    ENG_CAPI_TransformGroup_GetLocalPosition @5 DATA
+    ENG_CAPI_TransformGroup_GetLocalRotation @6 DATA
+    ENG_CAPI_TransformGroup_GetLocalScale @7 DATA
+    ENG_CAPI_TransformGroup_GetPosition @8 DATA
+    ENG_CAPI_TransformGroup_GetScale @9 DATA
+    ENG_CAPI_TransformGroup_GetSumBox @10 DATA
+    ENG_CAPI_TransformGroup_GetTarget @11 DATA
+    ENG_CAPI_TransformGroup_GetUp @12 DATA
+    ENG_CAPI_TransformGroup_GetWorld @13 DATA
+    ENG_CAPI_TransformGroup_GetWorldBox @14 DATA
+    ENG_CAPI_TransformGroup_IsCullable @15 DATA
+    ENG_CAPI_TransformGroup_IsTransparent @16 DATA
+    ENG_CAPI_TransformGroup_IsVisible @17 DATA
+    ENG_CAPI_TransformGroup_LocalToWorldDirection @18 DATA
+    ENG_CAPI_TransformGroup_LocalToWorldPosition @19 DATA
+    ENG_CAPI_TransformGroup_LookAt @20 DATA
+    ENG_CAPI_TransformGroup_LookAtLocalDirection @21 DATA
+    ENG_CAPI_TransformGroup_LookAtPosition @22 DATA
+    ENG_CAPI_TransformGroup_MoveForward @23 DATA
+    ENG_CAPI_TransformGroup_Rotate @24 DATA
+    ENG_CAPI_TransformGroup_SetLocalRotation @25 DATA
+    ENG_CAPI_TransformGroup_SetPosition @26 DATA
+    ENG_CAPI_TransformGroup_SetScale @27 DATA
+    ENG_CAPI_TransformGroup_ShiftPosition @28 DATA
+    ENG_CAPI_TransformGroup_ViewBottom @29 DATA
+    ENG_CAPI_TransformGroup_ViewFront @30 DATA
+    ENG_CAPI_TransformGroup_ViewLeft @31 DATA
+    ENG_CAPI_TransformGroup_ViewRear @32 DATA
+    ENG_CAPI_TransformGroup_ViewRight @33 DATA
+    ENG_CAPI_TransformGroup_ViewTop @34 DATA
+    ENG_CAPI_TransformGroup_WorldToLocalDirection @35 DATA
+    ENG_CAPI_TransformGroup_WorldToLocalPosition @36 DATA
+    Fl2Es_ActorCreate @37
+    Fl2Es_ActorDelete @38
+    Fl2Es_ActorFieldRead @39
+    Fl2Es_ActorFieldWrite @40
+    Fl2Es_ActorMethodUpdate @41
+    Fl2Es_ExportFunction @42
+    Fl2Es_GetClassName @43
+    Fl2Es_GetFieldName @44
+    Fl2Es_GetFieldNum @45
+    Fl2Es_GetFieldType @46
+    Fl2Es_VRLangBegin @47
+    Fl2Es_VRLangEnd @48
+    PTransformGetPropertyVector3 @49 DATA
+    PTransformSetPropertyVector3 @50 DATA
+    hello @51

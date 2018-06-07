@@ -1,0 +1,34 @@
+
+
+void %group%::Get%prop%( %eCppArgType%* __ret__, int index)
+{
+	if (ENG_CAPI_%group%_Get%prop%)
+	{
+		%eCppArgType% *r = new %eCppArgType%;
+		*r = %eCppArgType%( ENG_CAPI_%group%_Get%prop%(Owner->id  %groupindexprevcomma% index) );
+		return r;
+	}
+	else
+	{
+		%eCppArgType% *r = new %eCppArgType%;
+		*r = %eCppArgType%( %default% );
+		return r;
+	}
+
+}
+
+
+void %group%::Set%prop%( %eCppArgType% *value, int index)
+{
+	if (ENG_CAPI_%group%_Set%prop%)
+	{
+		ENG_CAPI_%group%_Set%prop%(Owner->id, %groupindexcomma%  *value, index);
+	}
+	else
+	{
+		if (ENG_CAPI_Debugger_Log)
+			ENG_CAPI_Debugger_Log(ES_STR( "ENG_CAPI_%group%_Set%prop% is not Linked" ), 0, 0.0f );
+	}
+}
+
+

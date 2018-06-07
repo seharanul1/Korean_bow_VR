@@ -1,0 +1,102 @@
+cbuffer SHADER_EXTERN
+{
+	float4 InverseViewportDimensions;
+	float4 MaxCoC;
+	float4 RadiusScale;
+	float4 TapCount;
+};
+
+// 출력정점 형식
+struct VS_OUTPUT
+{
+	float4 Position : POSITION;   
+	float3 UV : TEXCOORD0;  // uv.z 는 depth 로 사용 한다 !!
+
+};
+
+
+
+Texture2D TextureFrameColor : register(t0);
+SamplerState TextureFrameColorSampler : register(s0);
+
+Texture2D TextureFrame4th : register(t1);
+SamplerState TextureFrame4thSampler : register(s1);
+
+Texture2D TextureFrameDepth : register(t2);
+SamplerState TextureFrameDepthSampler : register(s2);
+
+#define NUM_TAPS 4
+
+static const float2 poisson[8] = {
+	float2(0.0,      0.0),
+	float2(0.527837,-0.085868),
+	float2(-0.040088, 0.536087),
+	float2(-0.670445,-0.179949),
+	float2(-0.419418,-0.616039),
+	float2(0.440453,-0.639399),
+	float2(-0.757088, 0.349334),
+	float2(0.574619, 0.685879)
+};
+
+
+float4 PS(VS_OUTPUT In) : SV_Target
+{
+
+	float4 cOut;
+	 float discRadius, discRadiusLow, centerDepth;
+	float4 DepthColor = TextureFrameDepth.Sample(TextureFrameDepthSampler, In.UV.xy);
+
+	// pixel size of low resolution image
+	float2 pixelSizeLow;
+	pixelSizeLow.x = 4.0 * InverseViewportDimensions.x;
+	pixelSizeLow.y = 4.0 * InverseViewportDimensions.y;
+
+
+	//float2 pixelSizeLow = 4.0 * InverseViewportDimensions.xy;
+
+	cOut = TextureFrameColor.Sample(TextureFrameColorSampler, In.UV.xy);   // fetch center tap
+	cOut.a = DepthColor.a;
+	centerDepth = cOut.a;              // save its depth
+
+
+	// convert depth into blur radius in pixels
+	discRadius = abs(cOut.a * MaxCoC.y - MaxCoC.x);
+	
+
+	// compute disc radius on low-res image
+	discRadiusLow = discRadius * RadiusScale.x;	
+	
+	// reuse cOut as an accumulator
+	cOut = 0;
+	
+	for (int t = TapCount.x; t < NUM_TAPS+TapCount.x; t++)
+	{
+		// fetch low-res tap
+		//(pixelSizeLow * poisson[t] * discRadiusLow);
+		float2 coordLow = In.UV.xy + (pixelSizeLow * poisson[t] * discRadiusLow);
+		float4 tapLow = TextureFrame4th.Sample(TextureFrame4thSampler, coordLow.xy);
+
+		// fetch high-res tap
+		float2 coordHigh = In.UV.xy + (InverseViewportDimensions.xy * poisson[t] * discRadius);
+		float4 tapHigh = TextureFrameColor.Sample(TextureFrameColorSampler, coordHigh.xy);
+		tapHigh.a = DepthColor.a;
+
+		// put tap blurriness into [0, 1] range
+		float tapBlur = abs(tapHigh.a * 2.0 - 1.0);
+
+		// mix low- and hi-res taps based on tap blurriness
+		float4 tap = lerp(tapHigh, tapLow, tapBlur);
+		// apply leaking reduction: lower weight for taps that are
+		// closer than the center tap and in focus
+		tap.a = (tap.a >= centerDepth) ? 1.0 : abs(tap.a * 2.0 - 1.0);
+
+		// accumulate
+		cOut.rgb += tap.rgb * tap.a;
+		cOut.a += tap.a;
+	}
+
+	// normalize and return result
+	return (cOut / cOut.a);
+		
+}
+

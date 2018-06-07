@@ -1,0 +1,3 @@
+typedef %dllRetType% (*Func_%group%_Get%prop%)(UID obj %propindexprevcomma%);
+typedef void (*Func_%group%_Set%prop%)(UID obj , %propindexcomma% %dllArgType% value);
+

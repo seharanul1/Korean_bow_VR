@@ -1,0 +1,3 @@
+	%eCppRetType% Get%prop%( );
+	void Set%prop%(%eCppArgType% value);
+

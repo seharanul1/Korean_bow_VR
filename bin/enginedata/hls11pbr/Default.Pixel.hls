@@ -1,0 +1,271 @@
+#line 1 "enginedata\hls11\Default.Pixel.hlp"
+
+//include "Common.Fragment.inc"
+
+// draw phase 
+// 
+//  PhaseShading = 0,
+//	PhaseEnvMap = 1,
+//  PhaseFlat = 2,
+//	PhaseDepth = 3,
+//	PhaseShadowMap = 4,
+//	PhaseMirror = 5,
+//	PhasePosition = 6,
+//	PhaseNormal = 7,
+//	PhaseLinearDepth = 8,
+
+
+
+cbuffer SHADER_EXTERN
+{
+	float4 DrawPhase;
+	float4 UseShadowMap;
+	float4 ClipPlane;
+
+
+	float4 MaterialAmbient;
+	float4 MaterialSpecular;
+	float4 MaterialDiffuse;
+
+	float4 AmbientColor;
+	float4 AmbientColorRate;
+
+	float4 Glossiness;
+
+	float4 CameraPos;
+
+	float4 LightColor[16];
+	float4 LightFactor[17];
+	float4 LightFactorSpotDirection[16];
+	float4 LightFactorSpotFactor[16];
+
+	float4 Opacity;
+
+	float4 FogFactor;
+	float4 FogColor;
+
+	float4 SunLight;	
+	
+	float4x4 ObjectWorld;
+
+	float4 NormalMapDirection;
+
+	float4 ShadingModel;
+	float4 DiffuseColor;
+
+	float4 AlphaTest;  
+
+	float4 BackgroundType;
+	float4 InternalMipMapInfo[11];
+	float4 EnvMapProjection;
+
+	float4 AlbedoColor;  
+	float4 Smoothness;
+	float4 Metalliness;
+	float4 IsPBRMaterial;  
+	float4 UseAlbedoTexture; 
+	float4 UseMetalSmoothnessTexture;  
+	float4 UseAOTexture;
+};
+
+
+
+// 출력정점 형식
+
+struct VS_OUTPUT
+{
+	float4 Position : POSITION0;
+	float4 UV : TEXCOORD0;  // uv.z 는 depth 로 사용 한다 !!
+	float4 InPosition : TEXCOORD1;
+	float4 ViewPosition : TEXCOORD2;
+	float4 ShadowPosition : TEXCOORD3;
+	float4 DepthPosition : TEXCOORD4; //flexcoa5
+	float4 CameraPosition : POSITION1;
+	float4 Normal : NORMAL0; 
+    float4 Tangent : NORMAL1;
+    float4 Binormal : NORMAL2;
+	float4 Diffuse : NORMAL3;
+};
+
+
+// lookup tag for dx9 code  
+
+// 5.1EX
+
+Texture2D TextureDiffuse : register(t0);
+SamplerState TextureDiffuseSampler : register(s0);
+
+Texture2D TextureNormal : register(t1);
+SamplerState TextureNormalSampler : register(s1);
+
+Texture2D TextureEnv : register(t2);
+SamplerState TextureEnvSampler : register(s2);
+
+Texture2D TextureSpecular : register(t3);
+SamplerState TextureSpecularSampler : register(s3);
+
+Texture2D TextureGlossiness : register(t4);
+SamplerState TextureGlossinessSampler : register(s4);
+
+Texture2D TextureShininess : register(t5);
+SamplerState TextureShininessSampler : register(s5);
+
+Texture2D TextureRoughness : register(t6);
+SamplerState TextureRoughnessSampler : register(s6);
+
+		
+float4 PS(VS_OUTPUT Out) : SV_Target
+{
+	if(DrawPhase.x >= 100.9 && DrawPhase.x <= 101.1){		
+		return TextureDiffuse.Sample(TextureDiffuseSampler, Out.UV);
+	}
+
+	if(DrawPhase.x >= 101.9 && DrawPhase.x <= 102.1){		
+		float3 outColorNormal =  normalize(Out.Normal.xyz); 
+		return float4(outColorNormal.xyz,1.0);
+	}
+
+	if(DrawPhase.x >= 102.9 && DrawPhase.x <= 103.1){		
+		// flexcoa8 start
+		float aoRealVal = 1.0;
+		 
+		if(UseAOTexture.x == 1.0){
+			float4 aoVal = TextureShininess .Sample(TextureDiffuseSampler, Out.UV);
+			aoRealVal = aoVal.x;
+		}
+
+		return float4(Out.InPosition.xyz,aoRealVal);
+
+		//return float4(Out.InPosition.xyz,1.0);
+		// flexcoa8 end		
+	}
+	
+	if(DrawPhase.x >= 200.9 && DrawPhase.x <= 201.1){		
+	    float gammaVal = 2.2;
+		float4 rmacVal;    
+		float4 albedoAndMetalVal;
+	
+		albedoAndMetalVal = AlbedoColor;
+
+		if(UseAlbedoTexture.x == 1.0){
+			albedoAndMetalVal *= TextureDiffuse.Sample(TextureDiffuseSampler, Out.UV);
+		}
+
+		if(UseMetalSmoothnessTexture.x == 1.0){
+			rmacVal = TextureGlossiness.Sample(TextureDiffuseSampler, Out.UV);		  // red???
+		}else{
+			rmacVal.g = Metalliness.x;
+		}
+
+			
+		//float4 albedoAndMetalVal = TextureDiffuse.Sample(TextureDiffuseSampler, Out.UV);
+		//float4 rmacVal    		 = TextureGlossiness.Sample(TextureDiffuseSampler, Out.UV);
+
+		float3 realAlbedoVal = albedoAndMetalVal.rgb; //pow(albedoAndMetalVal.rgb,gammaVal);
+		float  realMetalVal  = rmacVal.g;
+
+		//realMetalVal = 0.8;
+
+		return float4(realAlbedoVal.xyz,realMetalVal);
+
+		
+		
+	}
+
+	if(DrawPhase.x >= 201.9 && DrawPhase.x <= 202.1){		
+		float4 normalAndSmoothness     = TextureNormal.Sample(TextureDiffuseSampler, Out.UV);
+		float4 rmacVal;//    		   = TextureGlossiness.Sample(TextureDiffuseSampler, Out.UV);
+		float3 normalMapVal = normalAndSmoothness.rgb * 2.0f - 1.0f;   // -1 ~ 1
+		float  smoothnessVal; //   = rmacVal.r; 
+
+		if(UseMetalSmoothnessTexture.x == 1.0){
+			rmacVal = TextureGlossiness.Sample(TextureDiffuseSampler, Out.UV);		
+				smoothnessVal		   = rmacVal.a;   // unity 
+		}else{
+			rmacVal.r = Smoothness.x;
+			smoothnessVal		   = rmacVal.r; 
+		}
+		
+		//smoothnessVal		   = rmacVal.r; 
+
+		//smoothnessVal		   = rmacVal.r; 
+	
+
+		//smoothnessVal   = 0.5;
+		
+		float3 tangentVal    =  Out.Tangent;
+		float3 binNormalVal  =  Out.Binormal;
+		float3 normal        =  Out.Normal; 
+					
+
+		//normalMapVal =  float3(1,1,1);
+
+		//normalMapVal.y *= -1;  // why flip?
+				
+		//tangentVal = float3(1,1,1);
+		//binNormalVal = float3(1,1,1);
+
+		//float3x3 surfaceTangentToView = float3x3( normalize(tangentVal.xyz), normalize(binNormalVal.xyz), normalize(normal.xyz));
+	    float3x3 surfaceTangentToView = float3x3(tangentVal.x, binNormalVal.x, normal.x, tangentVal.y, binNormalVal.y, normal.y, tangentVal.z, binNormalVal.z, normal.z);
+		
+		float3 realNormal    = normalize(mul(surfaceTangentToView, normalMapVal));
+	
+		//float3 realNormal    = normalize(normal);
+		
+		float lengval = length(realNormal);
+
+		
+		// 예외 처리 realNormal이 0,0,0일때에의 처리 
+		if(lengval > 0.0001){
+			realNormal = realNormal;
+		}else{
+			realNormal = normal;		
+		}
+		
+		return float4(realNormal,smoothnessVal);
+	}
+
+	if(DrawPhase.x >= 202.9 && DrawPhase.x <= 203.1){	
+		//float depthVal = Out.Position.z / Out.Position.w;
+		float depthVal = Out.DepthPosition.z / Out.DepthPosition.w; //flexcoa5
+		return float4(depthVal,depthVal,depthVal,1.0);
+	}
+
+	//return TextureDiffuse.Sample(TextureDiffuseSampler, Out.UV);
+		
+	return float4(0.0,1,0,1.0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

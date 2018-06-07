@@ -1,0 +1,44 @@
+<Atlas AtlasTextureSize="2048" SourceImageCount="4" AtlasTextureCount="1">
+  <AtlasTexture AtlasInSourceImageCount="4" AtlasTextureIndex="0" AtlasTextureName="2datlas_0.png">
+    <SourceImage SourceImageName="joong2.png" flipped="False">
+      <x>0</x>
+      <y>0</y>
+      <width>134</width>
+      <height>140</height>
+      <u0>0</u0>
+      <v0>0</v0>
+      <u1>0.06542969</u1>
+      <v1>0.06835938</v1>
+    </SourceImage>
+    <SourceImage SourceImageName="yesjoong2.png" flipped="False">
+      <x>0</x>
+      <y>140</y>
+      <width>134</width>
+      <height>140</height>
+      <u0>0</u0>
+      <v0>0.06835938</v0>
+      <u1>0.06542969</u1>
+      <v1>0.1367188</v1>
+    </SourceImage>
+    <SourceImage SourceImageName="nojoong2.png" flipped="False">
+      <x>134</x>
+      <y>0</y>
+      <width>162</width>
+      <height>151</height>
+      <u0>0.06542969</u0>
+      <v0>0</v0>
+      <u1>0.1445313</u1>
+      <v1>0.07373047</v1>
+    </SourceImage>
+    <SourceImage SourceImageName="converted_ddd.png" flipped="False">
+      <x>134</x>
+      <y>151</y>
+      <width>681</width>
+      <height>392</height>
+      <u0>0.06542969</u0>
+      <v0>0.07373047</v0>
+      <u1>0.3979492</u1>
+      <v1>0.2651367</v1>
+    </SourceImage>
+  </AtlasTexture>
+</Atlas>

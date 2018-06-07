@@ -1,0 +1,76 @@
+cbuffer SHADER_EXTERN 
+{
+	float4 BloomIntensity;
+	float4 BloomSaturation;
+	float4 SceneIntensity;
+	float4 SceneSaturation;
+	float4 Gamma;
+	
+};
+
+static const float3 GrayScaleIntensity = {0.299f, 0.587f, 0.114f};
+
+
+// 출력정점 형식
+struct VS_OUTPUT
+{
+	float4 Position : POSITION;
+	float3 UV : TEXCOORD0;  // uv.z 는 depth 로 사용 한다 !!
+};
+
+
+float4 AdjustSaturation(float4 color, float saturation)
+{
+	float intensity = dot(color.rgb,GrayScaleIntensity);
+	return float4(lerp(intensity.rrr,color.rgb,saturation),color.a);
+}
+
+
+
+
+
+
+
+
+// lookup tag for dx9 code  
+/*
+아래 slot number가 dx11에서 bug 있으므로  아래 comment된 코드와 병용해야 함
+sampler TextureFrameColor : register(s0);
+//sampler TextureFrameDepth : register(s1);
+*/
+
+
+Texture2D TextureFrameColor : register(t0);
+Texture2D TextureFrameBloom : register(t1);
+SamplerState TextureFrameColorSampler : register(s0);
+SamplerState TextureFrameBloomSampler : register(s1);
+
+//Texture2D TextureFrameDepth : register(t1);
+//SamplerState TextureFrameDepthSampler : register(s1);
+
+
+
+
+
+float4 PS(VS_OUTPUT Out) : SV_Target
+{
+	float4 sceneColor = TextureFrameColor.Sample(TextureFrameColorSampler, Out.UV.xy);
+	float4 bloomColor = TextureFrameBloom.Sample(TextureFrameBloomSampler, Out.UV.xy);
+
+	sceneColor = AdjustSaturation(sceneColor, SceneSaturation.x) * SceneIntensity.x;
+
+	bloomColor = AdjustSaturation(bloomColor, BloomSaturation.x) * BloomIntensity.x;
+
+	float4 finalColor;
+
+	sceneColor *= (1 - saturate(bloomColor));
+	
+	finalColor = (sceneColor + bloomColor) * Gamma.x;
+
+	finalColor = clamp(finalColor,0.0f,1.0f);
+
+	return finalColor;
+}
+
+
+

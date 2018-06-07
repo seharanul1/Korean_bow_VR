@@ -1,0 +1,130 @@
+
+
+
+
+cbuffer SHADER_EXTERN
+{
+	float4 DrawPhase;
+	float4 ClipPlane;
+	float4 Opacity;
+	float4 FogFactor;
+	float4 FogColor;
+	float4 TextureUVTransform;
+};
+
+
+
+// 출력정점 형식
+struct VS_OUTPUT
+{
+	float4 Position : POSITION;
+	float3 UV : TEXCOORD0;  // uv.z 는 depth 로 사용 한다 !!
+	float3 InPosition : TEXCOORD1;
+};
+
+
+/*
+아래 slot number가 dx11에서 bug 있으므로  아래 comment된 코드와 병용해야 함
+
+sampler TextureDiffuse : register(s0);
+*/
+
+
+Texture2D TextureDiffuse : register(t0);
+SamplerState TextureDiffuseSampler : register(s0);
+
+
+
+//CSI 0307
+float2 GetTextureColor(float4 TextureUV ,  float2 uv)
+{
+
+		float2 uv0 = TextureUVTransform.xy;
+		float2 uv1 = TextureUVTransform.zw;
+		float2 uv_vec = float2(uv1.x - uv0.x , uv1.y - uv0.y);
+		float2 result;
+
+		bool Flipped = false;
+
+		if(uv1.y > 1.0)
+		{
+			Flipped = true;
+		}
+	
+	
+	if( !Flipped  )
+	{
+		float2 uv0 = TextureUVTransform.xy;
+		float2 uv1 = TextureUVTransform.zw;
+		
+		float2 uv_vec = float2(uv1.x - uv0.x , uv1.y - uv0.y);
+
+		result =  float2(uv0.x  + (uv_vec.x * uv.x) , uv0.y + (uv_vec.y * uv.y) ); 
+	}
+	else
+	{
+		float2 uv0 = TextureUVTransform.zy;
+		float2 uv1 = TextureUVTransform.xw;
+
+		uv1.y = uv1.y - 1;
+
+		
+		
+		float2 uv_vec = float2(uv1.x - uv0.x , uv1.y - uv0.y);
+		
+		result =  float2(uv0.x  + (uv_vec.x * uv.y) , uv0.y + (uv_vec.y * uv.x) ); 
+
+
+		
+	}
+
+
+	return result;
+	
+}
+
+
+
+float4 PS(VS_OUTPUT Out) : SV_Target
+{
+	float4 color;
+
+	//CSI 0307
+    	Out.UV.xy = GetTextureColor(TextureUVTransform ,  Out.UV.xy );
+
+
+
+	color = TextureDiffuse.Sample(TextureDiffuseSampler, Out.UV.xy);
+	color.w *= Opacity.x;
+
+	// PhaseDepth
+	if (DrawPhase.x >= 2.9 && DrawPhase.x <= 3.1) // == 3)  
+		color.w = Out.UV.z;
+		
+	if (ClipPlane.x != 0.0 || ClipPlane.y != 0.0 || ClipPlane.z != 0.0)
+	{
+		if (Out.InPosition.x * ClipPlane.x + Out.InPosition.y * ClipPlane.y + Out.InPosition.z * ClipPlane.z + ClipPlane.w <= 0)
+			discard;	
+	}
+	
+	if (FogFactor.x <= 19.0) // fogLinear
+	{
+		float rate = (Out.UV.z - FogFactor.y) / (FogFactor.z - FogFactor.y);
+		if (rate < 0.0) 
+			rate = 0.0;
+		else
+		if (rate > 1.0)
+			rate = 1.0;
+		
+		color.xyz = color.xyz * (1-rate) + FogColor.xyz * rate;
+	}
+	//else  // otherwise not implemented
+		
+
+	return color;
+}
+
+
+
+
+

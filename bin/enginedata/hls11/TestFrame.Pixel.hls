@@ -1,0 +1,81 @@
+cbuffer SHADER_EXTERN 
+{
+	float4 FilterSwitch;
+	float4 Gamma;
+};
+
+static const float4x4 ColorFilter = { 1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1 };
+
+static const float4x4 InverseFilter = { -1, 0, 0, 0,
+0, -1, 0, 0,
+0, 0, -1, 0,
+1, 1, 1, 1 };
+
+static const float3 GrayScaleIntensity = { 0.299f, 0.587f, 0.114f };
+
+static const float3x3 SepiaFilter = { 0.393f, 0.349f, 0.272f,
+0.769f, 0.686f, 0.534f,
+0.189f, 0.168f, 0.131f };
+
+
+// 출력정점 형식
+struct VS_OUTPUT
+{
+	float4 Position : POSITION;
+	float3 UV : TEXCOORD0;  // uv.z 는 depth 로 사용 한다 !!
+};
+
+
+
+
+// lookup tag for dx9 code  
+/*
+아래 slot number가 dx11에서 bug 있으므로  아래 comment된 코드와 병용해야 함
+sampler TextureFrameColor : register(s0);
+//sampler TextureFrameDepth : register(s1);
+*/
+
+
+Texture2D TextureFrameColor : register(t0);
+SamplerState TextureFrameColorSampler : register(s0);
+
+//Texture2D TextureFrameDepth : register(t1);
+//SamplerState TextureFrameDepthSampler : register(s1);
+
+
+
+float4 PS(VS_OUTPUT Out) : SV_Target
+{
+	float4 color;
+	float4 finalColor;
+	int hello = 1;
+	color = TextureFrameColor.Sample(TextureFrameColorSampler, Out.UV.xy);
+	float grey = 0.299 * color.x + 0.587 * color.y + 0.114 * color.z;
+	finalColor = float4(mul(color, SepiaFilter).rgb, color.a);
+
+	//FilterSwitch.x = 3.0;
+	if(FilterSwitch.x ==0.0)
+		finalColor = float4(color.rgb, color.a)*Gamma.x;
+
+	else if (FilterSwitch.x ==1.0)
+		finalColor = float4(mul(color, SepiaFilter).rgb, color.a)*Gamma.x;
+
+	else if (FilterSwitch.x == 2.0)
+		finalColor = float4(mul(color, InverseFilter).rgb, color.a)*Gamma.x;
+
+	else if (FilterSwitch.x == 3.0)
+	{
+		float intensity = dot(color.rgb, GrayScaleIntensity);
+		finalColor = float4(intensity.rrr, color.a)*Gamma.x;
+	}
+
+		finalColor = clamp(finalColor,0.0f,1.0f);
+
+	return finalColor;
+}
+
+
+

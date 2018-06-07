@@ -1,0 +1,4 @@
+	%eCppRetType% Get%prop%( int index);
+	void Set%prop%(%eCppArgType% value, int index);
+
+

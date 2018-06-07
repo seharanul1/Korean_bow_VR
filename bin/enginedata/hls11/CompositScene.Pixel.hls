@@ -1,0 +1,54 @@
+// 출력정점 형식
+struct VS_OUTPUT
+{
+	float4 Position : POSITION;
+	float3 UV : TEXCOORD0;  // uv.z 는 depth 로 사용 한다 !!
+};
+
+
+
+// lookup tag for dx9 code  
+/*
+아래 slot number가 dx11에서 bug 있으므로  아래 comment된 코드와 병용해야 함
+sampler TextureFrameColor : register(s0);
+//sampler TextureFrameDepth : register(s1);
+*/
+
+
+Texture2D TextureFrameColor : register(t0);
+Texture2D TextureFrameHalf : register(t1);
+Texture2D TextureFrame4th : register(t2);
+
+
+SamplerState TextureFrameColorSampler : register(s0);
+SamplerState TextureFrameHalfSampler : register(s1);
+SamplerState TextureFrame4thSampler : register(s2);
+
+
+
+
+
+float4 PS(VS_OUTPUT Out) : SV_Target
+{
+	float4 baseColor = TextureFrameColor.Sample(TextureFrameColorSampler, Out.UV.xy);
+	float4 halfColor = TextureFrameHalf.Sample(TextureFrameHalfSampler, Out.UV.xy);
+	float4 quarterColor = TextureFrame4th.Sample(TextureFrame4thSampler, Out.UV.xy);
+
+
+
+
+	//float4 color = baseColor * 0.5 + halfColor * 0.25 + quarterColor * 0.25;
+	float4 color = float4(lerp(baseColor.rgb,halfColor.rgb,0.5),1.0f);
+	color = float4(lerp(color.rgb,quarterColor.rgb,0.5),1.0f);
+
+	//float4 color = quarterColor;
+
+	color.a = 1.0f;
+
+	
+	
+	return color;
+}
+
+
+

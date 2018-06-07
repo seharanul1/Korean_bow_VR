@@ -1,0 +1,58 @@
+cbuffer SHADER_EXTERN
+{
+	float4 BlurAmount;
+	float4 SampleCount;
+	float4 HorizontalOffsets[30];
+	float4 SampleWeights[30];
+	float4 Gamma;
+};
+
+
+// 출력정점 형식
+struct VS_OUTPUT
+{
+	float4 Position : POSITION;
+	float3 UV : TEXCOORD0;  // uv.z 는 depth 로 사용 한다 !!
+
+};
+
+
+
+// lookup tag for dx9 code  
+/*
+아래 slot number가 dx11에서 bug 있으므로  아래 comment된 코드와 병용해야 함
+sampler TextureFrameColor : register(s0);
+//sampler TextureFrameDepth : register(s1);
+*/
+
+
+Texture2D TextureFrameColor : register(t0);
+SamplerState TextureFrameColorSampler : register(s0);
+
+//Texture2D TextureFrameDepth : register(t1);
+//SamplerState TextureFrameDepthSampler : register(s1);
+
+
+
+float4 PS(VS_OUTPUT In) : SV_Target
+{
+	float4 color = float4(0.0f,0.0f,0.0f,0.0f);
+	int count = 41;
+	//color = TextureFrameColor.Sample(TextureFrameColorSampler, In.UV.xy);
+				
+
+	for(int i = 0 ; i <SampleCount.x; i++)
+	{
+		color += TextureFrameColor.Sample(TextureFrameColorSampler, In.UV.xy + HorizontalOffsets[i].xy)*SampleWeights[i].x;
+	}
+	
+	color.a = 1.0f;
+	
+	color = color * Gamma.x;
+
+
+	return color;
+}
+
+
+
